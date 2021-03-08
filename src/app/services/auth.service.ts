@@ -1,19 +1,26 @@
 import { Injectable } from '@angular/core';
-import firebase from 'firebase/app';
-
+import { AngularFireAuth } from '@angular/fire/auth';
+import { Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
 
-  constructor() { }
+  authSubject = new Subject<boolean>();
+  isAuth: boolean = false;
+
+  constructor(
+    public afAuth: AngularFireAuth
+  ) { }
 
   createNewUser(email: string, password: string) {
     return new Promise<void>(
       (resolve, reject) => {
-        firebase.auth().createUserWithEmailAndPassword(email, password).then(
+        this.afAuth.createUserWithEmailAndPassword(email, password).then(
           () => {
+            this.isAuth = true;
+            this.emitAuthSubject();
             resolve();
           },
           (error) => {
@@ -24,15 +31,17 @@ export class AuthService {
     );
   }
 
-  signupUser(email: string, password: string) {
+  signinUser(email: string, password: string) {
     return new Promise<void>(
       (resolve, reject) => {
-        firebase.auth().signInWithEmailAndPassword(email, password).then(
+        this.afAuth.signInWithEmailAndPassword(email, password).then(
           () => {
+            this.isAuth = true;
+            this.emitAuthSubject();
             resolve();
           },
           (error) => {
-            reject(error)
+            reject(error);
           }
         );
       }
@@ -40,6 +49,24 @@ export class AuthService {
   }
 
   signOutUser() {
-    firebase.auth().signOut();
+    return new Promise<void>(
+      (resolve, reject) => {
+        this.afAuth.signOut().then(
+          () => {
+            this.isAuth = false;
+            this.emitAuthSubject();
+            resolve();
+          },
+          (error) => {
+            reject(error);
+          }
+        );
+      }
+    );
+    
+  }
+
+  emitAuthSubject() {
+    this.authSubject.next(this.isAuth);
   }
 }
