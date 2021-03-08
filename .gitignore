@@ -47,3 +47,4 @@ Thumbs.db
 
 # Configuration
 config.json
+src/environments/environment.ts
